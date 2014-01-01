@@ -24,7 +24,7 @@
       (list-matching-lines-face . bold)
       (view-highlight-face . highlight)
       (widget-mouse-face . highlight))
-     (default ((t (:bold t :stipple nil :background "gray80" :foreground "black" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight bold :height 96 :width normal :foundry "ibm" :family "Courier"))))
+     (default ((t (:bold t :stipple nil :background "white" :foreground "black" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight bold :height 96 :width normal :foundry "ibm" :family "Courier"))))
      (CUA-global-mark-face ((t (:background "cyan" :foreground "black"))))
      (CUA-rectangle-face ((t (:background "maroon" :foreground "white"))))
      (CUA-rectangle-noselect-face ((t (:background "dimgray" :foreground "white"))))
@@ -672,4 +672,3 @@
      (yellow ((t (:foreground "yellow"))))
      (zmacs-region ((t (:background "gray65")))))))
 (add-to-list 'color-themes '(my-color-theme  "THEME NAME" "YOUR NAME"))
-

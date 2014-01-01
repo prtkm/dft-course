@@ -1,6 +1,6 @@
 ;;; org-feed.el --- Add RSS feed items to Org files
 ;;
-;; Copyright (C) 2009-2012 Free Software Foundation, Inc.
+;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
 ;;
 ;; Author: Carsten Dominik <carsten at orgmode dot org>
 ;; Keywords: outlines, hypermedia, calendar, wp
@@ -215,10 +215,7 @@ Here are the keyword-value pair allows in `org-feed-alist'.
 (defcustom org-feed-drawer "FEEDSTATUS"
   "The name of the drawer for feed status information.
 Each feed may also specify its own drawer name using the `:drawer'
-parameter in `org-feed-alist'.
-Note that in order to make these drawers behave like drawers, they must
-be added to the variable `org-drawers' or configured with a #+DRAWERS
-line."
+parameter in `org-feed-alist'."
   :group 'org-feed
   :type '(string :tag "Drawer Name"))
 
@@ -694,5 +691,9 @@ formatted as a string, not the original XML data."
     entry))
 
 (provide 'org-feed)
+
+;; Local variables:
+;; generated-autoload-file: "org-loaddefs.el"
+;; End:
 
 ;;; org-feed.el ends here

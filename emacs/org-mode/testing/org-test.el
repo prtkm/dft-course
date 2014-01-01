@@ -1,6 +1,6 @@
 ;;;; org-test.el --- Tests for Org-mode
 
-;; Copyright (c) 2010-2012 Sebastian Rose, Eric Schulte
+;; Copyright (c) 2010-2013 Sebastian Rose, Eric Schulte
 ;; Authors:
 ;;     Sebastian Rose, Hannover, Germany, sebastian_rose gmx de
 ;;     Eric Schulte, Santa Fe, New Mexico, USA, schulte.eric gmail com
@@ -30,52 +30,61 @@
 
 
 ;;;; Code:
-(require 'org-test-ob-consts)
 
-(let* ((org-test-dir (expand-file-name
-		      (file-name-directory
-		       (or load-file-name buffer-file-name))))
-       (org-lisp-dir (expand-file-name
-		      (concat org-test-dir "../lisp"))))
+;;; Ob constants
 
-  (unless (featurep 'org)
-    (setq load-path (cons org-lisp-dir load-path))
-    (require 'org)
-    (require 'org-id)
-     (org-babel-do-load-languages
-     'org-babel-load-languages '((sh . t) (org . t))))
+(defconst org-test-file-ob-anchor
+  "94839181-184f-4ff4-a72f-94214df6f5ba")
 
-  (let* ((load-path (cons
-		     org-test-dir
-		     (cons
-		      (expand-file-name "jump" org-test-dir)
-		      load-path))))
-    (require 'cl)
-    (when (= emacs-major-version 22)
-      (defvar special-mode-map
-	(let ((map (make-sparse-keymap)))
-	  (suppress-keymap map)
-	  (define-key map "q" 'quit-window)
-	  (define-key map " " 'scroll-up)
-	  (define-key map "\C-?" 'scroll-down)
-	  (define-key map "?" 'describe-mode)
-	  (define-key map "h" 'describe-mode)
-	  (define-key map ">" 'end-of-buffer)
-	  (define-key map "<" 'beginning-of-buffer)
-	  (define-key map "g" 'revert-buffer)
-	  (define-key map "z" 'kill-this-buffer)
-	  map))
+(defconst org-test-link-in-heading-file-ob-anchor
+  "a8b1d111-eca8-49f0-8930-56d4f0875155")
 
-      (put 'special-mode 'mode-class 'special)
-      (define-derived-mode special-mode nil "Special"
-	"Parent major mode from which special major modes should inherit."
-	(setq buffer-read-only t)))
-    (require 'ert)
-    (require 'ert-x)
-    (when (file-exists-p
-	   (expand-file-name "jump/jump.el" org-test-dir))
-      (require 'jump)
-      (require 'which-func))))
+(unless (and (boundp 'org-batch-test) org-batch-test)
+  (let* ((org-test-dir (expand-file-name
+			(file-name-directory
+			 (or load-file-name buffer-file-name))))
+	 (org-lisp-dir (expand-file-name
+			(concat org-test-dir "../lisp"))))
+
+    (unless (featurep 'org)
+      (setq load-path (cons org-lisp-dir load-path))
+      (require 'org)
+      (require 'org-id)
+      (require 'ox)
+      (org-babel-do-load-languages
+       'org-babel-load-languages '((sh . t) (org . t))))
+
+    (let* ((load-path (cons
+		       org-test-dir
+		       (cons
+			(expand-file-name "jump" org-test-dir)
+			load-path))))
+      (require 'cl)
+      (when (= emacs-major-version 22)
+	(defvar special-mode-map
+	  (let ((map (make-sparse-keymap)))
+	    (suppress-keymap map)
+	    (define-key map "q" 'quit-window)
+	    (define-key map " " 'scroll-up)
+	    (define-key map "\C-?" 'scroll-down)
+	    (define-key map "?" 'describe-mode)
+	    (define-key map "h" 'describe-mode)
+	    (define-key map ">" 'end-of-buffer)
+	    (define-key map "<" 'beginning-of-buffer)
+	    (define-key map "g" 'revert-buffer)
+	    (define-key map "z" 'kill-this-buffer)
+	    map))
+
+	(put 'special-mode 'mode-class 'special)
+	(define-derived-mode special-mode nil "Special"
+	  "Parent major mode from which special major modes should inherit."
+	  (setq buffer-read-only t)))
+      (require 'ert)
+      (require 'ert-x)
+      (when (file-exists-p
+	     (expand-file-name "jump/jump.el" org-test-dir))
+	(require 'jump)
+	(require 'which-func)))))
 
 (defconst org-test-default-test-file-name "tests.el"
   "For each defun a separate file with tests may be defined.
@@ -102,6 +111,9 @@ org-test searches this directory up the directory tree.")
 
 (defconst org-test-link-in-heading-file
   (expand-file-name "link-in-heading.org" org-test-dir))
+
+(defconst org-id-locations-file
+  (expand-file-name ".test-org-id-locations" org-test-dir))
 
 
 ;;; Functions for writing tests
@@ -136,18 +148,19 @@ currently executed.")
 	  (id-file (car id-location))
 	  (visited-p (get-file-buffer id-file))
 	  to-be-removed)
-     (save-window-excursion
-       (save-match-data
-	 (org-id-goto ,id)
-	 (setq to-be-removed (current-buffer))
-	 (condition-case nil
-	     (progn
-	       (org-show-subtree)
-	       (org-show-block-all))
-	   (error nil))
-	 (save-restriction ,@body)))
-     (unless visited-p
-       (kill-buffer to-be-removed))))
+     (unwind-protect
+	 (save-window-excursion
+	   (save-match-data
+	     (org-id-goto ,id)
+	     (setq to-be-removed (current-buffer))
+	     (condition-case nil
+		 (progn
+		   (org-show-subtree)
+		   (org-show-block-all))
+	       (error nil))
+	     (save-restriction ,@body)))
+       (unless (or visited-p (not to-be-removed))
+	 (kill-buffer to-be-removed)))))
 (def-edebug-spec org-test-at-id (form body))
 
 (defmacro org-test-in-example-file (file &rest body)
@@ -201,7 +214,7 @@ otherwise place the point at the beginning of the inserted text."
 		      (goto-char ,(match-beginning 0)))
 	    `(progn (insert ,inside-text)
 		    (goto-char (point-min)))))
-       (prog1 ,@body (kill-buffer)))))
+       ,@body)))
 (def-edebug-spec org-test-with-temp-text (form body))
 
 (defmacro org-test-with-temp-text-in-file (text &rest body)
@@ -214,11 +227,64 @@ otherwise place the point at the beginning of the inserted text."
        (with-temp-file ,file (insert ,inside-text))
        (find-file ,file)
        (org-mode)
-       (setq ,results ,@body)
+       (setq ,results (progn ,@body))
        (save-buffer) (kill-buffer (current-buffer))
        (delete-file ,file)
        ,results)))
 (def-edebug-spec org-test-with-temp-text-in-file (form body))
+
+(defun org-test-table-target-expect (target &optional expect laps
+&rest tblfm)
+  "For all TBLFM: Apply the formula to TARGET, compare EXPECT with result.
+Either LAPS and TBLFM are nil and the table will only be aligned
+or LAPS is the count of recalculations that should be made on
+each TBLFM.  To save ERT run time keep LAPS as low as possible to
+get the table stable.  Anyhow, if LAPS is 'iterate then iterate,
+but this will run one recalculation longer.  When EXPECT is nil
+it will be set to TARGET.
+
+When running a test interactively in ERT is not enough and you
+need to examine the target table with e. g. the Org formula
+debugger or an Emacs Lisp debugger (e. g. with point in a data
+field and calling the instrumented `org-table-eval-formula') then
+copy and paste the table with formula from the ERT results buffer
+or temporarily substitute the `org-test-with-temp-text' of this
+function with `org-test-with-temp-text-in-file'.  Also consider
+setting `pp-escape-newlines' to nil manually."
+  (require 'pp)
+  (let ((back pp-escape-newlines) (current-tblfm))
+    (unless tblfm
+      (should-not laps)
+      (push "" tblfm))  ; Dummy formula.
+    (unless expect (setq expect target))
+    (while (setq current-tblfm (pop tblfm))
+      (org-test-with-temp-text (concat target current-tblfm)
+	;; Search the last of possibly several tables, let the ERT
+	;; test fail if not found.
+	(goto-char (point-max))
+	(while (not (org-at-table-p))
+	  (should (eq 0 (forward-line -1))))
+	(when laps
+	  (if (and (symbolp laps) (eq laps 'iterate))
+	      (should (org-table-recalculate 'iterate t))
+	    (should (integerp laps))
+	    (should (< 0 laps))
+	    (let ((cnt laps))
+	      (while (< 0 cnt)
+		(should (org-table-recalculate 'all t))
+		(setq cnt (1- cnt))))))
+	(org-table-align)
+	(setq pp-escape-newlines nil)
+	;; Declutter the ERT results buffer by giving only variables
+	;; and not directly the forms to `should'.
+	(let ((expect (concat expect current-tblfm))
+	      (result (buffer-substring-no-properties
+		       (point-min) (point-max))))
+	  (should (equal expect result)))
+	;; If `should' passed then set back `pp-escape-newlines' here,
+	;; else leave it nil as a side effect to see the failed table
+	;; on multiple lines in the ERT results buffer.
+	(setq pp-escape-newlines back)))))
 
 
 ;;; Navigation Functions
@@ -250,8 +316,7 @@ otherwise place the point at the beginning of the inserted text."
 	 "			\"..\" (file-name-directory\n"
 	 "			      (or load-file-name buffer-file-name)))\n"
 	 "		       load-path)))\n"
-	 "  (require 'org-test)\n"
-	 "  (require 'org-test-ob-consts))\n\n"
+	 "  (require 'org-test)\n\n"
 	 "\n"
 	 ";;; Tests\n"
 	 "(ert-deftest " name "/example-test ()\n"
@@ -300,7 +365,7 @@ otherwise place the point at the beginning of the inserted text."
 		     (rld path)
 		   (condition-case err
 		       (when (string-match "^[A-Za-z].*\\.el$"
-					 (file-name-nondirectory path))
+					   (file-name-nondirectory path))
 			 (load-file path))
 		     (missing-test-dependency
 		      (let ((name (intern
@@ -347,20 +412,18 @@ otherwise place the point at the beginning of the inserted text."
     org-test-example-dir 'full
     "^\\([^.]\\|\\.\\([^.]\\|\\..\\)\\).*\\.org$")))
 
-(defun org-test-run-batch-tests ()
-  "Run all defined tests matching \"\\(org\\|ob\\)\".
+(defun org-test-run-batch-tests (&optional org-test-selector)
+  "Run all tests matching an optional regex which defaults to \"\\(org\\|ob\\)\".
 Load all test files first."
   (interactive)
   (let ((org-id-track-globally t)
-	(org-id-locations-file
-	 (convert-standard-filename
-	  (expand-file-name
-	   "testing/.test-org-id-locations"
-	   org-base-dir))))
+	(org-test-selector
+	 (if org-test-selector org-test-selector "\\(org\\|ob\\)"))
+	org-confirm-babel-evaluate vc-handled-backends)
     (org-test-touch-all-examples)
     (org-test-update-id-locations)
     (org-test-load)
-    (ert-run-tests-batch-and-exit "\\(org\\|ob\\)")))
+    (ert-run-tests-batch-and-exit org-test-selector)))
 
 (defun org-test-run-all-tests ()
   "Run all defined tests matching \"\\(org\\|ob\\)\".

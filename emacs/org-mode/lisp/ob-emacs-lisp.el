@@ -1,6 +1,6 @@
 ;;; ob-emacs-lisp.el --- org-babel functions for emacs-lisp code evaluation
 
-;; Copyright (C) 2009-2012  Free Software Foundation, Inc.
+;; Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
 ;; Author: Eric Schulte
 ;; Keywords: literate programming, reproducible research
@@ -27,10 +27,8 @@
 
 ;;; Code:
 (require 'ob)
-(eval-when-compile (require 'ob-comint))
 
-(defvar org-babel-default-header-args:emacs-lisp
-  '((:hlines . "yes") (:colnames . "no"))
+(defvar org-babel-default-header-args:emacs-lisp nil
   "Default arguments for evaluating an emacs-lisp source block.")
 
 (declare-function orgtbl-to-generic "org-table" (table params))
@@ -56,11 +54,13 @@
   "Execute a block of emacs-lisp code with Babel."
   (save-window-excursion
     ((lambda (result)
-       (if (or (member "scalar" (cdr (assoc :result-params params)))
-	       (member "verbatim" (cdr (assoc :result-params params))))
-	   (let ((print-level nil)
-		 (print-length nil))
-	     (format "%S" result))
+       (org-babel-result-cond (cdr (assoc :result-params params))
+	 (let ((print-level nil)
+	       (print-length nil))
+	   (if (or (member "scalar" (cdr (assoc :result-params params)))
+		   (member "verbatim" (cdr (assoc :result-params params))))
+	       (format "%S" result)
+	     (format "%s" result)))
 	 (org-babel-reassemble-table
 	  result
 	  (org-babel-pick-name (cdr (assoc :colname-names params))

@@ -24,7 +24,7 @@ infodir = $(prefix)/info
 
 # Define if you want to include some (or all) files from contrib/lisp
 # just the filename please (no path prefix, no .el suffix), maybe with globbing
-#ORG_ADD_CONTRIB = org-e-* org-md org-export # e.g. the new exporter
+#ORG_ADD_CONTRIB = ox-* # e.g. the contributed exporter
 
 # Where to create temporary files for the testsuite
 # respect TMPDIR if it is already defined in the environment
@@ -39,7 +39,7 @@ BTEST_POST  =
               # -L <path-to>/ert      # needed for Emacs23, Emacs24 has ert built in
               # -L <path-to>/ess      # needed for running R tests
               # -L <path-to>/htmlize  # need at least version 1.34 for source code formatting
-BTEST_OB_LANGUAGES = awk C fortran maxima lilypond octave python sh
+BTEST_OB_LANGUAGES = awk C fortran maxima lilypond octave python sh perl
               # R                     # requires ESS to be installed and configured
 # extra packages to require for testing
 BTEST_EXTRA =
@@ -56,20 +56,23 @@ BTEST	= $(BATCH) \
 	  --eval '(add-to-list '"'"'load-path "./lisp")' \
 	  --eval '(add-to-list '"'"'load-path "./testing")' \
 	  $(BTEST_POST) \
-	  -l org-install.el \
+	  -l org-loaddefs.el \
 	  -l testing/org-test.el \
 	  $(foreach ob-lang,$(BTEST_OB_LANGUAGES),$(req-ob-lang)) \
 	  $(foreach req,$(BTEST_EXTRA),$(req-extra)) \
-	  --eval '(setq org-confirm-babel-evaluate nil)' \
-	  -f org-test-run-batch-tests
+	  --eval '(setq org-confirm-babel-evaluate nil)'
 
 # Using emacs in batch mode.
 # BATCH = $(EMACS) -batch -vanilla # XEmacs
-BATCH	= $(EMACS) -batch -Q
+BATCH	= $(EMACS) -batch -Q \
+	  --eval '(setq vc-handled-backends nil)'
+
+# Emacs must be started in toplevel directory
+BATCHO	= $(BATCH) \
+	  --eval '(add-to-list '"'"'load-path "./lisp")'
 
 # How to generate local.mk
-MAKE_LOCAL_MK = $(BATCH) \
-	  --eval '(add-to-list '"'"'load-path "./lisp")' \
+MAKE_LOCAL_MK = $(BATCHO) \
 	  --eval '(load "org-compat.el")' \
 	  --eval '(load "../mk/org-fixup.el")' \
 	  --eval '(org-make-local-mk)'
@@ -78,17 +81,17 @@ MAKE_LOCAL_MK = $(BATCH) \
 BATCHL	= $(BATCH) \
 	  --eval '(add-to-list '"'"'load-path ".")'
 
-# How to generate org-install.el
+# How to generate org-loaddefs.el
 MAKE_ORG_INSTALL = $(BATCHL) \
 	  --eval '(load "org-compat.el")' \
 	  --eval '(load "../mk/org-fixup.el")' \
-	  --eval '(org-make-org-install)'
+	  --eval '(org-make-org-loaddefs)'
 
 # How to generate org-version.el
 MAKE_ORG_VERSION = $(BATCHL) \
 	  --eval '(load "org-compat.el")' \
 	  --eval '(load "../mk/org-fixup.el")' \
-	  --eval '(org-make-org-version "$(ORGVERSION)" "$(GITVERSION)" "$(datadir)")'
+	  --eval '(org-make-org-version "$(ORGVERSION)" "$(GITVERSION)" "'$(datadir)'")'
 
 # How to byte-compile the whole source directory
 ELCDIR	= $(BATCHL) \
@@ -99,7 +102,7 @@ ELC	= $(BATCHL) \
 	  --eval '(batch-byte-compile)'
 
 # How to make a pdf file from a texinfo file
-TEXI2PDF = texi2pdf --batch --clean
+TEXI2PDF = texi2pdf --batch --clean --expand
 
 # How to make a pdf file from a tex file
 PDFTEX = pdftex

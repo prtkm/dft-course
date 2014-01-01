@@ -5,7 +5,7 @@
 (global-visual-line-mode 1) ; how long lines are handled
 ;; turn on font-lock mode
 (global-font-lock-mode t)
-
+(set-default-font "Ubuntu Mono-10")
 (show-paren-mode 1)
 (line-number-mode 1)
 
@@ -23,6 +23,7 @@
 (add-to-list 'load-path (concat dft-course "/emacs/color-theme-6.6.0"))
 (require 'color-theme)
 (load-file (concat dft-course "/emacs/my-color-theme.el"))
+(load-file (concat dft-course "/emacs/markdown-mode/markdown-mode.el"))
 (my-color-theme)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -48,6 +49,18 @@
     (switch-to-buffer-other-window "*Python*")))
 
 (ad-activate 'py-execute-buffer)
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; markdown-mode
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(autoload 'markdown-mode "markdown-mode"
+   "Major mode for editing Markdown files" t)
+(add-to-list 'auto-mode-alist '("\\.text\\'" . markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.markdown\\'" . markdown-mode))
+(add-to-list 'auto-mode-alist '("\\.md\\'" . markdown-mode))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -260,3 +273,4 @@ I use this to run commands asynchronously in the shell. org-mode runs shell link
 ; you can further customize by creating a new lisp file and
 ;uncommenting this line
 ; (load-file "yourcustom.el")
+(load-file (concat dft-course "/emacs/jorg-bib.el"))
